@@ -28,6 +28,8 @@ import ButtonModal from './components/ButtonModal';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const INLINE_ADD_THRESHOLD = 6; // actions before + becomes a FAB
+
 const C = {
   bg: '#F7F3ED',
   surface: '#EDE8E0',
@@ -219,11 +221,21 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
           data={actions}
           keyExtractor={item => String(item.id)}
           numColumns={2}
-          contentContainerStyle={styles.grid}
+          contentContainerStyle={[styles.grid, { paddingBottom: actions.length > INLINE_ADD_THRESHOLD ? 100 : 24 }]}
           ListEmptyComponent={
             <Text style={styles.emptyText}>
               Tap + to add your first action button
             </Text>
+          }
+          ListFooterComponent={
+            actions.length <= INLINE_ADD_THRESHOLD ? (
+              <Pressable
+                style={({ pressed }) => [styles.inlineAdd, { opacity: pressed ? 0.75 : 1 }]}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text style={styles.inlineAddIcon}>+</Text>
+              </Pressable>
+            ) : null
           }
           renderItem={({ item }) => (
             <ActionButton
@@ -235,21 +247,15 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
           )}
         />
 
-        {/* FAB */}
-        <Pressable
-          style={({ pressed }) => [styles.fab, { opacity: pressed ? 0.75 : 1 }]}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.fabIcon}>+</Text>
-        </Pressable>
-
-        {/* Back button */}
-        <Pressable
-          style={({ pressed }) => [styles.backBtn, { opacity: pressed ? 0.75 : 1 }]}
-          onPress={dismiss}
-        >
-          <Text style={styles.backIcon}>←</Text>
-        </Pressable>
+        {/* FAB — only when action count exceeds threshold */}
+        {actions.length > INLINE_ADD_THRESHOLD && (
+          <Pressable
+            style={({ pressed }) => [styles.fab, { opacity: pressed ? 0.75 : 1 }]}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text style={styles.fabIcon}>+</Text>
+          </Pressable>
+        )}
       </View>
 
       <ButtonModal
@@ -438,7 +444,6 @@ const styles = StyleSheet.create({
   },
   grid: {
     padding: 10,
-    paddingBottom: 100,
   },
   emptyText: {
     textAlign: 'center',
@@ -469,26 +474,22 @@ const styles = StyleSheet.create({
     lineHeight: 32,
     marginTop: -2,
   },
-  backBtn: {
-    position: 'absolute',
-    bottom: 28,
-    left: 24,
+  inlineAdd: {
+    alignSelf: 'center',
+    marginTop: 16,
+    marginBottom: 32,
     width: 56,
     height: 56,
     borderRadius: 28,
     backgroundColor: C.ink,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 6,
-    elevation: 6,
   },
-  backIcon: {
-    fontSize: 22,
+  inlineAddIcon: {
+    fontSize: 28,
     color: '#F7F3ED',
-    lineHeight: 26,
+    lineHeight: 32,
+    marginTop: -2,
   },
   // Context menu
   menuOverlay: {
