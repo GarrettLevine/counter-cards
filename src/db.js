@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { runMigrations } from './migrations';
 
 let db;
 
@@ -10,85 +11,7 @@ function getDB() {
 }
 
 export async function initDB() {
-  const database = getDB();
-
-  // Ensure legacy + new tables exist (safe no-ops if already present)
-  database.execSync(`
-    CREATE TABLE IF NOT EXISTS counter (
-      id    INTEGER PRIMARY KEY,
-      value REAL DEFAULT 0,
-      name  TEXT DEFAULT 'TOTAL SAVED'
-    );
-
-    CREATE TABLE IF NOT EXISTS actions (
-      id     INTEGER PRIMARY KEY AUTOINCREMENT,
-      label  TEXT NOT NULL,
-      amount REAL NOT NULL
-    );
-
-    CREATE TABLE IF NOT EXISTS meta (version INTEGER);
-
-    CREATE TABLE IF NOT EXISTS trackers (
-      id         INTEGER PRIMARY KEY AUTOINCREMENT,
-      name       TEXT DEFAULT 'NEW TRACKER',
-      value      REAL DEFAULT 0,
-      sort_order INTEGER DEFAULT 0
-    );
-  `);
-
-  // Read schema version
-  const metaRow = database.getFirstSync('SELECT version FROM meta WHERE rowid = 1;');
-  const version = metaRow ? metaRow.version : 0;
-
-  if (version < 2) {
-    // Seed legacy counter row if missing (fresh install path)
-    const legacyRow = database.getFirstSync('SELECT id FROM counter WHERE id = 1;');
-    if (!legacyRow) {
-      database.runSync(
-        "INSERT INTO counter (id, value, name) VALUES (1, 0, 'TOTAL SAVED');"
-      );
-    }
-
-    // Copy legacy counter into trackers (preserving id=1)
-    database.runSync(
-      'INSERT OR IGNORE INTO trackers (id, name, value) SELECT id, name, value FROM counter WHERE id = 1;'
-    );
-
-    // Seed default tracker if trackers is still empty
-    const trackerCount = database.getFirstSync('SELECT COUNT(*) as cnt FROM trackers;');
-    if (!trackerCount || trackerCount.cnt === 0) {
-      database.runSync(
-        "INSERT INTO trackers (id, name, value, sort_order) VALUES (1, 'TOTAL SAVED', 0, 0);"
-      );
-    }
-
-    // Add tracker_id column to actions (back-fills existing rows to tracker 1)
-    try {
-      database.execSync(
-        'ALTER TABLE actions ADD COLUMN tracker_id INTEGER DEFAULT 1;'
-      );
-    } catch (_) {
-      // Column already exists — safe to ignore
-    }
-
-    // Mark migration complete
-    database.runSync(
-      'INSERT OR REPLACE INTO meta (rowid, version) VALUES (1, 2);'
-    );
-  }
-
-  if (version < 3) {
-    database.execSync(`
-      CREATE TABLE IF NOT EXISTS history_log (
-        id         INTEGER PRIMARY KEY AUTOINCREMENT,
-        tracker_id INTEGER NOT NULL,
-        label      TEXT NOT NULL,
-        amount     REAL NOT NULL,
-        created_at INTEGER NOT NULL
-      );
-    `);
-    database.runSync('UPDATE meta SET version = 3 WHERE rowid = 1;');
-  }
+  runMigrations(getDB());
 }
 
 // ─── Trackers ────────────────────────────────────────────────────────────────
