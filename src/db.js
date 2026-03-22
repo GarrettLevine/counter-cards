@@ -17,17 +17,9 @@ export async function initDB() {
 // ─── Trackers ────────────────────────────────────────────────────────────────
 
 export function getTrackers() {
-  return getDB().getAllSync(`
-    SELECT t.*,
-           COALESCE(a.cnt, 0) AS action_count
-    FROM trackers t
-    LEFT JOIN (
-      SELECT tracker_id, COUNT(*) AS cnt
-      FROM actions
-      GROUP BY tracker_id
-    ) a ON a.tracker_id = t.id
-    ORDER BY t.sort_order ASC, t.id ASC;
-  `);
+  return getDB().getAllSync(
+    'SELECT * FROM trackers ORDER BY id ASC;'
+  );
 }
 
 export function insertTracker(name) {

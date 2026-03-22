@@ -20,8 +20,6 @@ export default function StackCard({ tracker, onPress, onLongPress, style }) {
       maximumFractionDigits: 2,
     });
 
-  const actionCount = tracker.action_count ?? 0;
-
   return (
     <Pressable
       onPress={onPress}
@@ -32,15 +30,14 @@ export default function StackCard({ tracker, onPress, onLongPress, style }) {
       <View style={styles.accentStrip} />
 
       <View style={styles.content}>
-        <Text style={styles.name} numberOfLines={1}>
-          {tracker.name || 'NEW TRACKER'}
-        </Text>
-        <Text style={[styles.value, isNegative && { color: '#DC2626' }]}>
-          {formattedValue}
-        </Text>
-        <Text style={styles.actionCount}>
-          {actionCount === 1 ? '1 action' : `${actionCount} actions`}
-        </Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.name} numberOfLines={1}>
+            {tracker.name || 'NEW TRACKER'}
+          </Text>
+          <Text style={[styles.value, isNegative && { color: '#DC2626' }]}>
+            {formattedValue}
+          </Text>
+        </View>
       </View>
     </Pressable>
   );
@@ -65,27 +62,24 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingVertical: 22,
+    paddingVertical: 14,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   name: {
+    flex: 1,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     color: C.inkMuted,
-    marginBottom: 8,
   },
   value: {
-    fontSize: 42,
-    fontWeight: '300',
+    fontSize: 22,
+    fontWeight: '600',
     color: C.ink,
-    letterSpacing: -1.5,
-    lineHeight: 48,
-  },
-  actionCount: {
-    fontSize: 12,
-    color: C.inkMuted,
-    marginTop: 8,
-    textAlign: 'right',
+    letterSpacing: -0.5,
   },
 });

@@ -84,10 +84,10 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
           </Text>
         ) : (
           <View style={[styles.stackContainer, { height: stackHeight, width: cardWidth }]}>
-            {/* Render in reverse so index 0 (top) is last in DOM = painted on top */}
-            {[...trackers].reverse().map((tracker, reversedIndex) => {
-              const index = trackers.length - 1 - reversedIndex;
-              const t = STACK_TRANSFORMS[Math.min(index, STACK_TRANSFORMS.length - 1)];
+            {/* Render oldest first so newest (highest z-index) is last in DOM = painted on top */}
+            {trackers.map((tracker, index) => {
+              const transformIndex = Math.min(trackers.length - 1 - index, STACK_TRANSFORMS.length - 1);
+              const t = STACK_TRANSFORMS[transformIndex];
               return (
                 <View
                   key={tracker.id}
@@ -102,7 +102,7 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
                         { translateY: t.translateY },
                         { rotate: t.rotate },
                       ],
-                      zIndex: trackers.length - index,
+                      zIndex: index + 1,
                       elevation: t.elevation,
                     },
                   ]}
