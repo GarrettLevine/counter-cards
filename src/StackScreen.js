@@ -6,7 +6,6 @@ import {
   Modal,
   Platform,
   Pressable,
-  SafeAreaView,
   ScrollView,
   StyleSheet,
   Text,
@@ -72,7 +71,7 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
       : CARD_HEIGHT;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
@@ -173,7 +172,7 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
           </View>
         </KeyboardAvoidingView>
       </Modal>
-    </SafeAreaView>
+    </View>
   );
 }
 
@@ -184,7 +183,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: CARD_HORIZONTAL_MARGIN,
-    paddingTop: 48,
+    paddingTop: 32,
     paddingBottom: 120,
     alignItems: 'center',
   },

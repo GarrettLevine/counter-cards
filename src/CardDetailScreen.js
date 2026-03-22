@@ -177,7 +177,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
     <Animated.View
       style={[styles.container, { transform: [{ translateY: slideAnim }] }]}
     >
-      <SafeAreaView style={styles.safe}>
+      <View style={styles.safe}>
         {/* Header strip — drag handle + name + total */}
         <View {...panResponder.panHandlers} style={styles.header}>
           <View style={styles.dragHandle} />
@@ -250,7 +250,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
         >
           <Text style={styles.backIcon}>←</Text>
         </Pressable>
-      </SafeAreaView>
+      </View>
 
       <ButtonModal
         visible={modalVisible}
