@@ -76,6 +76,19 @@ export async function initDB() {
       'INSERT OR REPLACE INTO meta (rowid, version) VALUES (1, 2);'
     );
   }
+
+  if (version < 3) {
+    database.execSync(`
+      CREATE TABLE IF NOT EXISTS history_log (
+        id         INTEGER PRIMARY KEY AUTOINCREMENT,
+        tracker_id INTEGER NOT NULL,
+        label      TEXT NOT NULL,
+        amount     REAL NOT NULL,
+        created_at INTEGER NOT NULL
+      );
+    `);
+    database.runSync('UPDATE meta SET version = 3 WHERE rowid = 1;');
+  }
 }
 
 // ─── Trackers ────────────────────────────────────────────────────────────────
@@ -135,6 +148,26 @@ export function insertActionForTracker(trackerId, label, amount) {
 
 export function deleteAction(id) {
   getDB().runSync('DELETE FROM actions WHERE id = ?;', [id]);
+}
+
+// ─── History Log ─────────────────────────────────────────────────────────────
+
+export function insertHistoryEntry(trackerId, label, amount) {
+  getDB().runSync(
+    'INSERT INTO history_log (tracker_id, label, amount, created_at) VALUES (?, ?, ?, ?);',
+    [trackerId, label, amount, Date.now()]
+  );
+}
+
+export function getHistoryForTracker(trackerId) {
+  return getDB().getAllSync(
+    'SELECT * FROM history_log WHERE tracker_id = ? ORDER BY created_at DESC;',
+    [trackerId]
+  );
+}
+
+export function clearHistoryForTracker(trackerId) {
+  getDB().runSync('DELETE FROM history_log WHERE tracker_id = ?;', [trackerId]);
 }
 
 // ─── Legacy exports (unused but kept to avoid import errors during transition) ─

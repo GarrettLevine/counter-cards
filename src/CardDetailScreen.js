@@ -4,6 +4,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
+  Modal,
   PanResponder,
   Pressable,
   SafeAreaView,
@@ -13,9 +14,12 @@ import {
   View,
 } from 'react-native';
 import {
+  clearHistoryForTracker,
   deleteAction,
   getActionsForTracker,
+  getHistoryForTracker,
   insertActionForTracker,
+  insertHistoryEntry,
   updateTrackerName,
   updateTrackerValue,
 } from './db';
@@ -41,6 +45,9 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
   const [actions, setActions] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [history, setHistory] = useState([]);
+  const [menuVisible, setMenuVisible] = useState(false);
+  const [historyVisible, setHistoryVisible] = useState(false);
+  const [historyEntries, setHistoryEntries] = useState([]);
   const nameInputRef = useRef(null);
 
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -97,21 +104,14 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
     const newVal = value + action.amount;
     updateTrackerValue(tracker.id, newVal);
     setValue(newVal);
+    insertHistoryEntry(tracker.id, action.label, action.amount);
   }
 
   function handleUndo() {
-    Alert.alert('Undo', 'Revert the last action?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Undo',
-        onPress: () => {
-          const prev = history[history.length - 1];
-          updateTrackerValue(tracker.id, prev);
-          setValue(prev);
-          setHistory(h => h.slice(0, -1));
-        },
-      },
-    ]);
+    const prev = history[history.length - 1];
+    updateTrackerValue(tracker.id, prev);
+    setValue(prev);
+    setHistory(h => h.slice(0, -1));
   }
 
   function handleClear() {
@@ -124,6 +124,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
           updateTrackerValue(tracker.id, 0);
           setValue(0);
           setHistory([]);
+          clearHistoryForTracker(tracker.id);
         },
       },
     ]);
@@ -200,25 +201,15 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
           )}
 
           <View style={styles.totalRow}>
-            <Pressable
-              onPress={handleUndo}
-              disabled={history.length === 0}
-              style={styles.headerBtn}
-            >
-              <Text
-                style={[
-                  styles.headerBtnText,
-                  history.length === 0 && styles.headerBtnDisabled,
-                ]}
-              >
-                ↩
-              </Text>
-            </Pressable>
+            <View style={styles.totalSpacer} />
             <Text style={[styles.total, isNegative && { color: '#DC2626' }]}>
               {isNegative ? '−' : ''}{formattedValue}
             </Text>
-            <Pressable onPress={handleClear} style={styles.headerBtn}>
-              <Text style={styles.headerBtnText}>⊘</Text>
+            <Pressable
+              onPress={() => setMenuVisible(true)}
+              style={styles.menuBtn}
+            >
+              <Text style={styles.menuBtnText}>⋯</Text>
             </Pressable>
           </View>
         </View>
@@ -266,6 +257,106 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
         onSave={handleSaveAction}
         onCancel={() => setModalVisible(false)}
       />
+
+      {/* Context menu modal */}
+      <Modal
+        visible={menuVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setMenuVisible(false)}
+      >
+        <Pressable style={styles.menuOverlay} onPress={() => setMenuVisible(false)}>
+          <View style={styles.menuSheet}>
+            <Pressable
+              style={[styles.menuRow, history.length === 0 && styles.menuRowDisabled]}
+              onPress={() => {
+                if (history.length === 0) return;
+                setMenuVisible(false);
+                handleUndo();
+              }}
+            >
+              <Text style={[styles.menuRowText, history.length === 0 && styles.menuRowTextDisabled]}>
+                Undo
+              </Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => {
+                setMenuVisible(false);
+                handleClear();
+              }}
+            >
+              <Text style={[styles.menuRowText, { color: '#DC2626' }]}>Clear</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => {
+                setHistoryEntries(getHistoryForTracker(tracker.id));
+                setMenuVisible(false);
+                setHistoryVisible(true);
+              }}
+            >
+              <Text style={styles.menuRowText}>History</Text>
+            </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* History modal */}
+      <Modal
+        visible={historyVisible}
+        animationType="slide"
+        onRequestClose={() => setHistoryVisible(false)}
+      >
+        <SafeAreaView style={styles.historyContainer}>
+          <View style={styles.historyHeader}>
+            <Text style={styles.historyTitle}>HISTORY</Text>
+            <Pressable onPress={() => setHistoryVisible(false)} style={styles.historyClose}>
+              <Text style={styles.historyCloseText}>×</Text>
+            </Pressable>
+          </View>
+          <FlatList
+            data={historyEntries}
+            keyExtractor={item => String(item.id)}
+            contentContainerStyle={historyEntries.length === 0 && styles.historyEmptyContainer}
+            ListEmptyComponent={
+              <Text style={styles.historyEmptyText}>No actions recorded yet</Text>
+            }
+            renderItem={({ item }) => {
+              const isPos = item.amount >= 0;
+              const absAmt = Math.abs(item.amount);
+              const formatted =
+                (isPos ? '+' : '−') +
+                '$' +
+                absAmt.toLocaleString('en-US', {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                });
+              const d = new Date(item.created_at);
+              const timestamp = d.toLocaleString('en-US', {
+                month: 'short',
+                day: 'numeric',
+                hour: 'numeric',
+                minute: '2-digit',
+                hour12: true,
+              }).replace(',', ' ·');
+              return (
+                <View style={styles.historyRow}>
+                  <View style={styles.historyRowLeft}>
+                    <Text style={styles.historyRowLabel}>{item.label}</Text>
+                    <Text style={[styles.historyRowAmount, { color: isPos ? '#16A34A' : '#DC2626' }]}>
+                      {formatted}
+                    </Text>
+                  </View>
+                  <Text style={styles.historyRowTime}>{timestamp}</Text>
+                </View>
+              );
+            }}
+          />
+        </SafeAreaView>
+      </Modal>
     </Animated.View>
   );
 }
@@ -296,16 +387,23 @@ const styles = StyleSheet.create({
   totalRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    width: '100%',
+    paddingHorizontal: 16,
   },
-  headerBtn: {
-    padding: 12,
+  totalSpacer: {
+    width: 44,
   },
-  headerBtnText: {
-    fontSize: 32,
+  menuBtn: {
+    width: 44,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    marginLeft: 'auto',
+  },
+  menuBtnText: {
+    fontSize: 28,
     color: C.ink,
-  },
-  headerBtnDisabled: {
-    color: C.inkMuted,
+    letterSpacing: 2,
   },
   trackerName: {
     fontSize: 11,
@@ -330,11 +428,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   total: {
+    flex: 1,
     fontSize: 64,
     fontWeight: '300',
     color: C.ink,
     letterSpacing: -2,
     lineHeight: 72,
+    textAlign: 'center',
   },
   grid: {
     padding: 10,
@@ -389,5 +489,102 @@ const styles = StyleSheet.create({
     fontSize: 22,
     color: '#F7F3ED',
     lineHeight: 26,
+  },
+  // Context menu
+  menuOverlay: {
+    flex: 1,
+    justifyContent: 'flex-end',
+    backgroundColor: 'rgba(0,0,0,0.35)',
+  },
+  menuSheet: {
+    backgroundColor: C.surface,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingBottom: 32,
+    paddingTop: 8,
+  },
+  menuRow: {
+    paddingVertical: 18,
+    paddingHorizontal: 24,
+  },
+  menuRowDisabled: {
+    opacity: 0.4,
+  },
+  menuRowText: {
+    fontSize: 17,
+    color: C.ink,
+  },
+  menuRowTextDisabled: {
+    color: C.inkMuted,
+  },
+  menuDivider: {
+    height: 1,
+    backgroundColor: C.border,
+    marginHorizontal: 16,
+  },
+  // History modal
+  historyContainer: {
+    flex: 1,
+    backgroundColor: C.bg,
+  },
+  historyHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  historyTitle: {
+    flex: 1,
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2.5,
+    color: C.inkMuted,
+  },
+  historyClose: {
+    padding: 8,
+  },
+  historyCloseText: {
+    fontSize: 24,
+    color: C.ink,
+    lineHeight: 28,
+  },
+  historyRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: C.border,
+  },
+  historyRowLeft: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  historyRowLabel: {
+    fontSize: 15,
+    color: C.ink,
+  },
+  historyRowAmount: {
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  historyRowTime: {
+    fontSize: 12,
+    color: C.inkMuted,
+  },
+  historyEmptyContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  historyEmptyText: {
+    fontSize: 15,
+    color: C.inkMuted,
+    textAlign: 'center',
+    marginTop: 60,
   },
 });
