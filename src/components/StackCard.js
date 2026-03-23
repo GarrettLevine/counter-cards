@@ -1,14 +1,13 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { pastelForTracker } from '../pastelColors';
 
 const C = {
-  bg: '#EDE8E0',
   ink: '#1C1917',
   inkMuted: '#78716C',
-  accent: '#D6CFC4',
 };
 
-export default function StackCard({ tracker, onPress, onLongPress, style }) {
+export default function StackCard({ tracker, onPress, onLongPress, style, isPeeking }) {
   const value = tracker.value ?? 0;
   const absValue = Math.abs(value);
   const isNegative = value < 0;
@@ -20,66 +19,65 @@ export default function StackCard({ tracker, onPress, onLongPress, style }) {
       maximumFractionDigits: 2,
     });
 
+  const bgColor = pastelForTracker(tracker);
+
   return (
     <Pressable
       onPress={onPress}
       onLongPress={onLongPress}
-      style={({ pressed }) => [styles.card, style, { opacity: pressed ? 0.85 : 1 }]}
+      style={({ pressed }) => [styles.card, { backgroundColor: bgColor, opacity: pressed ? 0.85 : 1 }, style]}
     >
-      {/* Left accent strip */}
-      <View style={styles.accentStrip} />
-
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          <Text style={styles.name} numberOfLines={1}>
-            {tracker.name || 'NEW TRACKER'}
-          </Text>
-          <Text style={[styles.value, isNegative && { color: '#DC2626' }]}>
+      <View style={styles.topRow}>
+        <Text style={styles.name} numberOfLines={1}>
+          {tracker.name || 'NEW TRACKER'}
+        </Text>
+        {isPeeking && (
+          <Text style={[styles.peekValue, isNegative && { color: '#DC2626' }]}>
             {formattedValue}
           </Text>
-        </View>
+        )}
       </View>
+      {!isPeeking && (
+        <Text style={[styles.value, isNegative && { color: '#DC2626' }]}>
+          {formattedValue}
+        </Text>
+      )}
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: C.bg,
-    borderRadius: 16,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.12,
-    shadowRadius: 8,
-    elevation: 4,
+    borderRadius: 0,
+    paddingHorizontal: 24,
+    paddingTop: 14,
+    paddingBottom: 28,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(28,25,23,0.08)',
   },
-  accentStrip: {
-    width: 4,
-    backgroundColor: C.accent,
-  },
-  content: {
-    flex: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-  },
-  headerRow: {
+  topRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
   },
   name: {
-    flex: 1,
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     color: C.inkMuted,
   },
-  value: {
-    fontSize: 22,
-    fontWeight: '600',
+  peekValue: {
+    fontSize: 16,
+    fontWeight: '500',
     color: C.ink,
     letterSpacing: -0.5,
+  },
+  value: {
+    fontSize: 40,
+    fontWeight: '300',
+    color: C.ink,
+    letterSpacing: -1.5,
+    marginTop: 8,
   },
 });

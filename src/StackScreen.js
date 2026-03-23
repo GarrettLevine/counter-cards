@@ -18,7 +18,12 @@ import StackCard from './components/StackCard';
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_HEIGHT = 140;
 const PEEK_HEIGHT = 52;
-const CARD_HORIZONTAL_MARGIN = 24;
+
+const STACK_TRANSFORMS = [
+  { scale: 1.0,   translateY: 0, rotate: '0deg',   elevation: 6 },
+  { scale: 0.985, translateY: 4, rotate: '0.3deg',  elevation: 4 },
+  { scale: 0.970, translateY: 8, rotate: '-0.3deg', elevation: 2 },
+];
 
 const C = {
   bg: '#F7F3ED',
@@ -27,12 +32,6 @@ const C = {
   inkMuted: '#78716C',
   border: '#D6CFC4',
 };
-
-const STACK_TRANSFORMS = [
-  { scale: 1.0, translateY: 0, rotate: '0deg', elevation: 6 },
-  { scale: 0.985, translateY: 4, rotate: '0.3deg', elevation: 4 },
-  { scale: 0.970, translateY: 8, rotate: '-0.3deg', elevation: 2 },
-];
 
 export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
   const [fabModalVisible, setFabModalVisible] = useState(false);
@@ -64,7 +63,6 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
     );
   }
 
-  const cardWidth = SCREEN_WIDTH - CARD_HORIZONTAL_MARGIN * 2;
   const stackHeight =
     trackers.length > 0
       ? CARD_HEIGHT + (trackers.length - 1) * PEEK_HEIGHT
@@ -76,15 +74,12 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.heading}>MY TRACKERS</Text>
-
         {trackers.length === 0 ? (
           <Text style={styles.emptyText}>
             Tap + to create your first tracker
           </Text>
         ) : (
-          <View style={[styles.stackContainer, { height: stackHeight, width: cardWidth }]}>
-            {/* Render oldest first so newest (highest z-index) is last in DOM = painted on top */}
+          <View style={[styles.stackContainer, { height: stackHeight }]}>
             {trackers.map((tracker, index) => {
               const transformIndex = Math.min(trackers.length - 1 - index, STACK_TRANSFORMS.length - 1);
               const t = STACK_TRANSFORMS[transformIndex];
@@ -94,7 +89,6 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
                   style={[
                     styles.cardWrapper,
                     {
-                      width: cardWidth,
                       height: CARD_HEIGHT,
                       top: index * PEEK_HEIGHT,
                       transform: [
@@ -112,6 +106,7 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
                     onPress={() => onCardOpen(tracker.id)}
                     onLongPress={() => handleDeleteTracker(tracker)}
                     style={{ height: CARD_HEIGHT }}
+                    isPeeking={index < trackers.length - 1}
                   />
                 </View>
               );
@@ -182,18 +177,16 @@ const styles = StyleSheet.create({
     backgroundColor: C.bg,
   },
   scrollContent: {
-    paddingHorizontal: CARD_HORIZONTAL_MARGIN,
     paddingTop: 32,
     paddingBottom: 120,
-    alignItems: 'center',
   },
   heading: {
     fontSize: 11,
     fontWeight: '700',
     letterSpacing: 2.5,
     color: C.inkMuted,
-    marginBottom: 32,
-    alignSelf: 'flex-start',
+    marginBottom: 16,
+    paddingHorizontal: 24,
   },
   emptyText: {
     textAlign: 'center',
@@ -201,10 +194,11 @@ const styles = StyleSheet.create({
     fontSize: 14,
     marginTop: 40,
     lineHeight: 22,
+    paddingHorizontal: 24,
   },
   stackContainer: {
     position: 'relative',
-    alignSelf: 'center',
+    width: SCREEN_WIDTH,
   },
   cardWrapper: {
     position: 'absolute',

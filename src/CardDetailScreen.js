@@ -21,11 +21,13 @@ import {
   getHistoryForTracker,
   insertActionForTracker,
   insertHistoryEntry,
+  updateTrackerColor,
   updateTrackerName,
   updateTrackerValue,
 } from './db';
 import ActionButton from './components/ActionButton';
 import ButtonModal from './components/ButtonModal';
+import { PASTEL_COLORS, pastelForTracker } from './pastelColors';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -49,8 +51,10 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
   const [modalVisible, setModalVisible] = useState(false);
   const [history, setHistory] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
+  const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyEntries, setHistoryEntries] = useState([]);
+  const [cardColor, setCardColor] = useState(() => pastelForTracker(tracker));
   const nameInputRef = useRef(null);
 
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
@@ -182,7 +186,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
     >
       <View style={styles.safe}>
         {/* Header strip — drag handle + name + total */}
-        <View {...panResponder.panHandlers} style={styles.header}>
+        <View {...panResponder.panHandlers} style={[styles.header, { backgroundColor: cardColor }]}>
           <View style={styles.dragHandle} />
 
           {editingName ? (
@@ -300,6 +304,16 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
             <Pressable
               style={styles.menuRow}
               onPress={() => {
+                setMenuVisible(false);
+                setColorPickerVisible(true);
+              }}
+            >
+              <Text style={styles.menuRowText}>Colour</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => {
                 setHistoryEntries(getHistoryForTracker(tracker.id));
                 setMenuVisible(false);
                 setHistoryVisible(true);
@@ -307,6 +321,38 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
             >
               <Text style={styles.menuRowText}>History</Text>
             </Pressable>
+          </View>
+        </Pressable>
+      </Modal>
+
+      {/* Colour picker modal */}
+      <Modal
+        visible={colorPickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setColorPickerVisible(false)}
+      >
+        <Pressable style={styles.menuOverlay} onPress={() => setColorPickerVisible(false)}>
+          <View style={styles.menuSheet}>
+            <Text style={styles.colorPickerTitle}>CHOOSE COLOUR</Text>
+            <View style={styles.colorSwatches}>
+              {PASTEL_COLORS.map(({ label, hex }) => (
+                <Pressable
+                  key={hex}
+                  onPress={() => {
+                    updateTrackerColor(tracker.id, hex);
+                    setCardColor(hex);
+                    refreshTrackers();
+                    setColorPickerVisible(false);
+                  }}
+                  style={[
+                    styles.swatch,
+                    { backgroundColor: hex },
+                    cardColor === hex && styles.swatchSelected,
+                  ]}
+                />
+              ))}
+            </View>
           </View>
         </Pressable>
       </Modal>
@@ -545,6 +591,30 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: C.border,
     marginHorizontal: 16,
+  },
+  colorPickerTitle: {
+    fontSize: 11,
+    fontWeight: '700',
+    letterSpacing: 2.5,
+    color: C.inkMuted,
+    textAlign: 'center',
+    paddingVertical: 16,
+  },
+  colorSwatches: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 12,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  swatch: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+  },
+  swatchSelected: {
+    borderWidth: 3,
+    borderColor: C.ink,
   },
   // History modal
   historyContainer: {
