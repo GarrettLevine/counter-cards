@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { pastelForTracker } from '../pastelColors';
 
 const C = {
@@ -7,7 +7,7 @@ const C = {
   inkMuted: '#78716C',
 };
 
-export default function StackCard({ tracker, onPress, onLongPress, style }) {
+export default function StackCard({ tracker, onPress, onLongPress, style, isPeeking }) {
   const value = tracker.value ?? 0;
   const absValue = Math.abs(value);
   const isNegative = value < 0;
@@ -27,12 +27,21 @@ export default function StackCard({ tracker, onPress, onLongPress, style }) {
       onLongPress={onLongPress}
       style={({ pressed }) => [styles.card, { backgroundColor: bgColor, opacity: pressed ? 0.85 : 1 }, style]}
     >
-      <Text style={styles.name} numberOfLines={1}>
-        {tracker.name || 'NEW TRACKER'}
-      </Text>
-      <Text style={[styles.value, isNegative && { color: '#DC2626' }]}>
-        {formattedValue}
-      </Text>
+      <View style={styles.topRow}>
+        <Text style={styles.name} numberOfLines={1}>
+          {tracker.name || 'NEW TRACKER'}
+        </Text>
+        {isPeeking && (
+          <Text style={[styles.peekValue, isNegative && { color: '#DC2626' }]}>
+            {formattedValue}
+          </Text>
+        )}
+      </View>
+      {!isPeeking && (
+        <Text style={[styles.value, isNegative && { color: '#DC2626' }]}>
+          {formattedValue}
+        </Text>
+      )}
     </Pressable>
   );
 }
@@ -41,9 +50,15 @@ const styles = StyleSheet.create({
   card: {
     borderRadius: 0,
     paddingHorizontal: 24,
-    paddingVertical: 28,
+    paddingTop: 14,
+    paddingBottom: 28,
     borderBottomWidth: 1,
     borderBottomColor: 'rgba(28,25,23,0.08)',
+  },
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
   name: {
     fontSize: 11,
@@ -51,12 +66,18 @@ const styles = StyleSheet.create({
     letterSpacing: 2.5,
     textTransform: 'uppercase',
     color: C.inkMuted,
-    marginBottom: 8,
+  },
+  peekValue: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: C.ink,
+    letterSpacing: -0.5,
   },
   value: {
     fontSize: 40,
     fontWeight: '300',
     color: C.ink,
     letterSpacing: -1.5,
+    marginTop: 8,
   },
 });

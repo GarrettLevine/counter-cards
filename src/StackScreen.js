@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import {
   Alert,
+  Dimensions,
   KeyboardAvoidingView,
   Modal,
   Platform,
@@ -13,6 +14,16 @@ import {
 } from 'react-native';
 import { deleteTracker, insertTracker } from './db';
 import StackCard from './components/StackCard';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const CARD_HEIGHT = 140;
+const PEEK_HEIGHT = 52;
+
+const STACK_TRANSFORMS = [
+  { scale: 1.0,   translateY: 0, rotate: '0deg',   elevation: 6 },
+  { scale: 0.985, translateY: 4, rotate: '0.3deg',  elevation: 4 },
+  { scale: 0.970, translateY: 8, rotate: '-0.3deg', elevation: 2 },
+];
 
 const C = {
   bg: '#F7F3ED',
@@ -52,25 +63,55 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
     );
   }
 
+  const stackHeight =
+    trackers.length > 0
+      ? CARD_HEIGHT + (trackers.length - 1) * PEEK_HEIGHT
+      : CARD_HEIGHT;
+
   return (
     <View style={styles.safe}>
       <ScrollView
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
       >
-{trackers.length === 0 ? (
+        {trackers.length === 0 ? (
           <Text style={styles.emptyText}>
             Tap + to create your first tracker
           </Text>
         ) : (
-          trackers.map(tracker => (
-            <StackCard
-              key={tracker.id}
-              tracker={tracker}
-              onPress={() => onCardOpen(tracker.id)}
-              onLongPress={() => handleDeleteTracker(tracker)}
-            />
-          ))
+          <View style={[styles.stackContainer, { height: stackHeight }]}>
+            {trackers.map((tracker, index) => {
+              const transformIndex = Math.min(trackers.length - 1 - index, STACK_TRANSFORMS.length - 1);
+              const t = STACK_TRANSFORMS[transformIndex];
+              return (
+                <View
+                  key={tracker.id}
+                  style={[
+                    styles.cardWrapper,
+                    {
+                      height: CARD_HEIGHT,
+                      top: index * PEEK_HEIGHT,
+                      transform: [
+                        { scale: t.scale },
+                        { translateY: t.translateY },
+                        { rotate: t.rotate },
+                      ],
+                      zIndex: index + 1,
+                      elevation: t.elevation,
+                    },
+                  ]}
+                >
+                  <StackCard
+                    tracker={tracker}
+                    onPress={() => onCardOpen(tracker.id)}
+                    onLongPress={() => handleDeleteTracker(tracker)}
+                    style={{ height: CARD_HEIGHT }}
+                    isPeeking={index < trackers.length - 1}
+                  />
+                </View>
+              );
+            })}
+          </View>
         )}
       </ScrollView>
 
@@ -154,6 +195,15 @@ const styles = StyleSheet.create({
     marginTop: 40,
     lineHeight: 22,
     paddingHorizontal: 24,
+  },
+  stackContainer: {
+    position: 'relative',
+    width: SCREEN_WIDTH,
+  },
+  cardWrapper: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
   },
   fab: {
     position: 'absolute',
