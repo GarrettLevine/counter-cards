@@ -81,6 +81,10 @@ export function getHistoryForTracker(trackerId) {
   );
 }
 
+export function deleteHistoryEntry(id) {
+  getDB().runSync('DELETE FROM history_log WHERE id = ?;', [id]);
+}
+
 export function clearHistoryForTracker(trackerId) {
   getDB().runSync('DELETE FROM history_log WHERE tracker_id = ?;', [trackerId]);
 }

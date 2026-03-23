@@ -16,6 +16,7 @@ import {
 import {
   clearHistoryForTracker,
   deleteAction,
+  deleteHistoryEntry,
   getActionsForTracker,
   getHistoryForTracker,
   insertActionForTracker,
@@ -357,6 +358,28 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
                     </Text>
                   </View>
                   <Text style={styles.historyRowTime}>{timestamp}</Text>
+                  <Pressable
+                    style={styles.historyDeleteBtn}
+                    onPress={() =>
+                      Alert.alert('Delete Entry', `Remove "${item.label}"?`, [
+                        { text: 'Cancel', style: 'cancel' },
+                        {
+                          text: 'Delete',
+                          style: 'destructive',
+                          onPress: () => {
+                            deleteHistoryEntry(item.id);
+                            setHistoryEntries(prev => prev.filter(e => e.id !== item.id));
+                            const newVal = value - item.amount;
+                            updateTrackerValue(tracker.id, newVal);
+                            setValue(newVal);
+                            refreshTrackers();
+                          },
+                        },
+                      ])
+                    }
+                  >
+                    <Text style={styles.historyDeleteIcon}>×</Text>
+                  </Pressable>
                 </View>
               );
             }}
@@ -576,6 +599,16 @@ const styles = StyleSheet.create({
   historyRowTime: {
     fontSize: 12,
     color: C.inkMuted,
+  },
+  historyDeleteBtn: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    marginLeft: 8,
+  },
+  historyDeleteIcon: {
+    fontSize: 20,
+    color: '#DC2626',
+    lineHeight: 24,
   },
   historyEmptyContainer: {
     flex: 1,
