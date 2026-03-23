@@ -45,6 +45,10 @@ export function updateTrackerName(id, name) {
   getDB().runSync('UPDATE trackers SET name = ? WHERE id = ?;', [name, id]);
 }
 
+export function updateTrackerColor(id, color) {
+  getDB().runSync('UPDATE trackers SET color = ? WHERE id = ?;', [color, id]);
+}
+
 // ─── Actions ─────────────────────────────────────────────────────────────────
 
 export function getActionsForTracker(trackerId) {

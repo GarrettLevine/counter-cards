@@ -55,6 +55,13 @@ const migrations = [
       );
     `);
   },
+
+  // v4 — per-tracker pastel colour
+  (db) => {
+    try {
+      db.execSync('ALTER TABLE trackers ADD COLUMN color TEXT;');
+    } catch (_) {}
+  },
 ];
 
 export function runMigrations(database) {
