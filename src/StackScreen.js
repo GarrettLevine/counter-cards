@@ -13,6 +13,7 @@ import {
   View,
 } from 'react-native';
 import { deleteTracker, insertTracker } from './db';
+import { TRACKER_TYPE } from './utils/formatValue';
 import StackCard from './components/StackCard';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -34,22 +35,22 @@ const C = {
 };
 
 const TYPE_OPTIONS = [
-  { key: 'number', label: 'Number' },
-  { key: 'monetary', label: 'Monetary' },
-  { key: 'percentage', label: 'Percentage' },
+  { key: TRACKER_TYPE.NUMBER, label: 'Number' },
+  { key: TRACKER_TYPE.MONETARY, label: 'Monetary' },
+  { key: TRACKER_TYPE.PERCENTAGE, label: 'Percentage' },
 ];
 
 export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
   const [fabModalVisible, setFabModalVisible] = useState(false);
   const [newName, setNewName] = useState('');
-  const [newType, setNewType] = useState('number');
+  const [newType, setNewType] = useState(TRACKER_TYPE.NUMBER);
 
   function handleAddTracker() {
     const name = newName.trim() || 'NEW TRACKER';
     insertTracker(name, newType);
     refreshTrackers();
     setNewName('');
-    setNewType('number');
+    setNewType(TRACKER_TYPE.NUMBER);
     setFabModalVisible(false);
   }
 
@@ -178,7 +179,7 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
                 style={styles.cancelBtn}
                 onPress={() => {
                   setNewName('');
-                  setNewType('number');
+                  setNewType(TRACKER_TYPE.NUMBER);
                   setFabModalVisible(false);
                 }}
               >

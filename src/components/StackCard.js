@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { pastelForTracker } from '../pastelColors';
-import { formatValue } from '../formatValue';
+import { pastelForTracker } from '../utils/pastelColors';
+import { formatValue } from '../utils/formatValue';
 
 const C = {
   ink: '#1C1917',

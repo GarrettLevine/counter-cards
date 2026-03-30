@@ -26,10 +26,10 @@ import {
   updateTrackerType,
   updateTrackerValue,
 } from './db';
-import { formatValue, formatHistoryAmount } from './formatValue';
+import { formatValue, formatHistoryAmount, TRACKER_TYPE } from './utils/formatValue';
 import ActionButton from './components/ActionButton';
 import ButtonModal from './components/ButtonModal';
-import { PASTEL_COLORS, pastelForTracker } from './pastelColors';
+import { PASTEL_COLORS, pastelForTracker } from './utils/pastelColors';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -55,7 +55,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
   const [menuVisible, setMenuVisible] = useState(false);
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
   const [typePickerVisible, setTypePickerVisible] = useState(false);
-  const [trackerType, setTrackerType] = useState(tracker.type ?? 'number');
+  const [trackerType, setTrackerType] = useState(tracker.type ?? TRACKER_TYPE.NUMBER);
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyEntries, setHistoryEntries] = useState([]);
   const [cardColor, setCardColor] = useState(() => pastelForTracker(tracker));
@@ -379,9 +379,9 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
             <Text style={styles.colorPickerTitle}>CHOOSE TYPE</Text>
             <View style={styles.typePills}>
               {[
-                { key: 'number', label: 'Number' },
-                { key: 'monetary', label: 'Monetary' },
-                { key: 'percentage', label: 'Percentage' },
+                { key: TRACKER_TYPE.NUMBER, label: 'Number' },
+                { key: TRACKER_TYPE.MONETARY, label: 'Monetary' },
+                { key: TRACKER_TYPE.PERCENTAGE, label: 'Percentage' },
               ].map(({ key, label }) => (
                 <Pressable
                   key={key}

@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, View } from 'react-native';
-import { formatActionAmount } from '../formatValue';
+import { formatActionAmount } from '../utils/formatValue';
 
 const C = {
   surface: '#EDE8E0',
