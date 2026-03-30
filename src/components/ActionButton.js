@@ -1,5 +1,6 @@
 import React from 'react';
 import { Pressable, Text, StyleSheet, View } from 'react-native';
+import { formatActionAmount } from '../utils/formatValue';
 
 const C = {
   surface: '#EDE8E0',
@@ -9,11 +10,10 @@ const C = {
   accentSub: '#DC2626',
 };
 
-export default function ActionButton({ label, amount, onPress, onLongPress }) {
+export default function ActionButton({ label, amount, onPress, onLongPress, type }) {
   const isAdd = amount >= 0;
   const accent = isAdd ? C.accentAdd : C.accentSub;
-  const sign = isAdd ? '+' : '−';
-  const absAmount = Math.abs(amount).toFixed(2);
+  const formatted = formatActionAmount(amount, type);
 
   return (
     <Pressable
@@ -26,7 +26,7 @@ export default function ActionButton({ label, amount, onPress, onLongPress }) {
     >
       <Text style={styles.label} numberOfLines={2}>{label}</Text>
       <Text style={[styles.amount, { color: accent }]}>
-        {sign}${absAmount}
+        {formatted}
       </Text>
     </Pressable>
   );

@@ -1,5 +1,6 @@
 import * as SQLite from 'expo-sqlite';
 import { runMigrations } from './migrations';
+import { TRACKER_TYPE } from './utils/formatValue';
 
 let db;
 
@@ -22,13 +23,17 @@ export function getTrackers() {
   );
 }
 
-export function insertTracker(name) {
+export function insertTracker(name, type = TRACKER_TYPE.NUMBER) {
   const database = getDB();
   database.runSync(
-    'INSERT INTO trackers (name, value, sort_order) VALUES (?, 0, (SELECT COALESCE(MAX(sort_order),0)+1 FROM trackers));',
-    [name || 'NEW TRACKER']
+    'INSERT INTO trackers (name, value, sort_order, type) VALUES (?, 0, (SELECT COALESCE(MAX(sort_order),0)+1 FROM trackers), ?);',
+    [name || 'NEW TRACKER', type]
   );
   return database.getFirstSync('SELECT last_insert_rowid() as id;').id;
+}
+
+export function updateTrackerType(id, type) {
+  getDB().runSync('UPDATE trackers SET type = ? WHERE id = ?;', [type, id]);
 }
 
 export function deleteTracker(id) {

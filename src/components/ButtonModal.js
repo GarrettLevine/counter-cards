@@ -9,6 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
 } from 'react-native';
+import { TRACKER_TYPE } from '../utils/formatValue';
 
 const C = {
   bg: '#F7F3ED',
@@ -20,7 +21,7 @@ const C = {
   accentSub: '#DC2626',
 };
 
-export default function ButtonModal({ visible, onSave, onCancel }) {
+export default function ButtonModal({ visible, onSave, onCancel, type }) {
   const [label, setLabel] = useState('');
   const [amountStr, setAmountStr] = useState('');
   const [isAdd, setIsAdd] = useState(true);
@@ -43,6 +44,9 @@ export default function ButtonModal({ visible, onSave, onCancel }) {
     setAmountStr('');
     setIsAdd(true);
   }
+
+  const amountLabel = type === TRACKER_TYPE.MONETARY ? 'Amount ($)' : type === TRACKER_TYPE.PERCENTAGE ? 'Amount (%)' : 'Amount';
+  const amountPlaceholder = type === TRACKER_TYPE.MONETARY ? '4.50' : type === TRACKER_TYPE.PERCENTAGE ? '10' : '5';
 
   return (
     <Modal
@@ -68,10 +72,10 @@ export default function ButtonModal({ visible, onSave, onCancel }) {
             returnKeyType="next"
           />
 
-          <Text style={styles.fieldLabel}>Amount ($)</Text>
+          <Text style={styles.fieldLabel}>{amountLabel}</Text>
           <TextInput
             style={styles.input}
-            placeholder="4.50"
+            placeholder={amountPlaceholder}
             placeholderTextColor={C.inkMuted}
             value={amountStr}
             onChangeText={setAmountStr}
