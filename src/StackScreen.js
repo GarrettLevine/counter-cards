@@ -33,15 +33,23 @@ const C = {
   border: '#D6CFC4',
 };
 
+const TYPE_OPTIONS = [
+  { key: 'number', label: 'Number' },
+  { key: 'monetary', label: 'Monetary' },
+  { key: 'percentage', label: 'Percentage' },
+];
+
 export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
   const [fabModalVisible, setFabModalVisible] = useState(false);
   const [newName, setNewName] = useState('');
+  const [newType, setNewType] = useState('number');
 
   function handleAddTracker() {
     const name = newName.trim() || 'NEW TRACKER';
-    insertTracker(name);
+    insertTracker(name, newType);
     refreshTrackers();
     setNewName('');
+    setNewType('number');
     setFabModalVisible(false);
   }
 
@@ -150,11 +158,27 @@ export default function StackScreen({ trackers, onCardOpen, refreshTrackers }) {
               autoFocus
             />
 
+            <Text style={[styles.fieldLabel, { marginTop: 16 }]}>Type</Text>
+            <View style={styles.typeRow}>
+              {TYPE_OPTIONS.map(({ key, label }) => (
+                <Pressable
+                  key={key}
+                  style={[styles.typePill, newType === key && styles.typePillActive]}
+                  onPress={() => setNewType(key)}
+                >
+                  <Text style={[styles.typePillText, newType === key && styles.typePillTextActive]}>
+                    {label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+
             <View style={styles.modalActions}>
               <Pressable
                 style={styles.cancelBtn}
                 onPress={() => {
                   setNewName('');
+                  setNewType('number');
                   setFabModalVisible(false);
                 }}
               >
@@ -264,6 +288,32 @@ const styles = StyleSheet.create({
     paddingVertical: 11,
     fontSize: 15,
     color: C.ink,
+  },
+  typeRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 4,
+  },
+  typePill: {
+    flex: 1,
+    paddingVertical: 9,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    alignItems: 'center',
+    backgroundColor: C.surface,
+  },
+  typePillActive: {
+    backgroundColor: C.ink,
+    borderColor: C.ink,
+  },
+  typePillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.inkMuted,
+  },
+  typePillTextActive: {
+    color: '#F7F3ED',
   },
   modalActions: {
     flexDirection: 'row',

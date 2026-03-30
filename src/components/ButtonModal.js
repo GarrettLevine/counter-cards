@@ -20,7 +20,7 @@ const C = {
   accentSub: '#DC2626',
 };
 
-export default function ButtonModal({ visible, onSave, onCancel }) {
+export default function ButtonModal({ visible, onSave, onCancel, type }) {
   const [label, setLabel] = useState('');
   const [amountStr, setAmountStr] = useState('');
   const [isAdd, setIsAdd] = useState(true);
@@ -43,6 +43,9 @@ export default function ButtonModal({ visible, onSave, onCancel }) {
     setAmountStr('');
     setIsAdd(true);
   }
+
+  const amountLabel = type === 'monetary' ? 'Amount ($)' : type === 'percentage' ? 'Amount (%)' : 'Amount';
+  const amountPlaceholder = type === 'monetary' ? '4.50' : type === 'percentage' ? '10' : '5';
 
   return (
     <Modal
@@ -68,10 +71,10 @@ export default function ButtonModal({ visible, onSave, onCancel }) {
             returnKeyType="next"
           />
 
-          <Text style={styles.fieldLabel}>Amount ($)</Text>
+          <Text style={styles.fieldLabel}>{amountLabel}</Text>
           <TextInput
             style={styles.input}
-            placeholder="4.50"
+            placeholder={amountPlaceholder}
             placeholderTextColor={C.inkMuted}
             value={amountStr}
             onChangeText={setAmountStr}

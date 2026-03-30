@@ -23,8 +23,10 @@ import {
   insertHistoryEntry,
   updateTrackerColor,
   updateTrackerName,
+  updateTrackerType,
   updateTrackerValue,
 } from './db';
+import { formatValue, formatHistoryAmount } from './formatValue';
 import ActionButton from './components/ActionButton';
 import ButtonModal from './components/ButtonModal';
 import { PASTEL_COLORS, pastelForTracker } from './pastelColors';
@@ -52,6 +54,8 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
   const [history, setHistory] = useState([]);
   const [menuVisible, setMenuVisible] = useState(false);
   const [colorPickerVisible, setColorPickerVisible] = useState(false);
+  const [typePickerVisible, setTypePickerVisible] = useState(false);
+  const [trackerType, setTrackerType] = useState(tracker.type ?? 'number');
   const [historyVisible, setHistoryVisible] = useState(false);
   const [historyEntries, setHistoryEntries] = useState([]);
   const [cardColor, setCardColor] = useState(() => pastelForTracker(tracker));
@@ -171,13 +175,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
     setModalVisible(false);
   }
 
-  const absValue = Math.abs(value);
-  const formattedValue =
-    '$' +
-    absValue.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const formattedValue = formatValue(value, trackerType);
   const isNegative = value < 0;
 
   return (
@@ -210,7 +208,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
           <View style={styles.totalRow}>
             <View style={styles.totalSpacer} />
             <Text style={[styles.total, isNegative && { color: '#DC2626' }]}>
-              {isNegative ? '−' : ''}{formattedValue}
+              {formattedValue}
             </Text>
             <Pressable
               onPress={() => setMenuVisible(true)}
@@ -248,6 +246,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
               amount={item.amount}
               onPress={() => handleActionPress(item)}
               onLongPress={() => handleActionLongPress(item)}
+              type={trackerType}
             />
           )}
         />
@@ -267,6 +266,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
         visible={modalVisible}
         onSave={handleSaveAction}
         onCancel={() => setModalVisible(false)}
+        type={trackerType}
       />
 
       {/* Context menu modal */}
@@ -309,6 +309,16 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
               }}
             >
               <Text style={styles.menuRowText}>Colour</Text>
+            </Pressable>
+            <View style={styles.menuDivider} />
+            <Pressable
+              style={styles.menuRow}
+              onPress={() => {
+                setMenuVisible(false);
+                setTypePickerVisible(true);
+              }}
+            >
+              <Text style={styles.menuRowText}>Type</Text>
             </Pressable>
             <View style={styles.menuDivider} />
             <Pressable
@@ -357,6 +367,42 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
         </Pressable>
       </Modal>
 
+      {/* Type picker modal */}
+      <Modal
+        visible={typePickerVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => setTypePickerVisible(false)}
+      >
+        <Pressable style={styles.menuOverlay} onPress={() => setTypePickerVisible(false)}>
+          <View style={styles.menuSheet}>
+            <Text style={styles.colorPickerTitle}>CHOOSE TYPE</Text>
+            <View style={styles.typePills}>
+              {[
+                { key: 'number', label: 'Number' },
+                { key: 'monetary', label: 'Monetary' },
+                { key: 'percentage', label: 'Percentage' },
+              ].map(({ key, label }) => (
+                <Pressable
+                  key={key}
+                  style={[styles.typePill, trackerType === key && styles.typePillActive]}
+                  onPress={() => {
+                    updateTrackerType(tracker.id, key);
+                    setTrackerType(key);
+                    refreshTrackers();
+                    setTypePickerVisible(false);
+                  }}
+                >
+                  <Text style={[styles.typePillText, trackerType === key && styles.typePillTextActive]}>
+                    {label}
+                  </Text>
+                </Pressable>
+              ))}
+            </View>
+          </View>
+        </Pressable>
+      </Modal>
+
       {/* History modal */}
       <Modal
         visible={historyVisible}
@@ -379,14 +425,7 @@ export default function CardDetailScreen({ tracker, onClose, refreshTrackers }) 
             }
             renderItem={({ item }) => {
               const isPos = item.amount >= 0;
-              const absAmt = Math.abs(item.amount);
-              const formatted =
-                (isPos ? '+' : '−') +
-                '$' +
-                absAmt.toLocaleString('en-US', {
-                  minimumFractionDigits: 2,
-                  maximumFractionDigits: 2,
-                });
+              const formatted = formatHistoryAmount(item.amount, trackerType);
               const d = new Date(item.created_at);
               const timestamp = d.toLocaleString('en-US', {
                 month: 'short',
@@ -615,6 +654,33 @@ const styles = StyleSheet.create({
   swatchSelected: {
     borderWidth: 3,
     borderColor: C.ink,
+  },
+  typePills: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+  },
+  typePill: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 999,
+    borderWidth: 1.5,
+    borderColor: C.border,
+    alignItems: 'center',
+    backgroundColor: C.surface,
+  },
+  typePillActive: {
+    backgroundColor: C.ink,
+    borderColor: C.ink,
+  },
+  typePillText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: C.inkMuted,
+  },
+  typePillTextActive: {
+    color: '#F7F3ED',
   },
   // History modal
   historyContainer: {

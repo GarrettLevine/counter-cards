@@ -1,6 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { pastelForTracker } from '../pastelColors';
+import { formatValue } from '../formatValue';
 
 const C = {
   ink: '#1C1917',
@@ -9,15 +10,8 @@ const C = {
 
 export default function StackCard({ tracker, onPress, onLongPress, style, isPeeking }) {
   const value = tracker.value ?? 0;
-  const absValue = Math.abs(value);
   const isNegative = value < 0;
-  const formattedValue =
-    (isNegative ? '−' : '') +
-    '$' +
-    absValue.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    });
+  const formattedValue = formatValue(value, tracker.type);
 
   const bgColor = pastelForTracker(tracker);
 

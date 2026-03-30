@@ -62,6 +62,13 @@ const migrations = [
       db.execSync('ALTER TABLE trackers ADD COLUMN color TEXT;');
     } catch (_) {}
   },
+
+  // v5 — tracker type (number | monetary | percentage)
+  (db) => {
+    try {
+      db.execSync("ALTER TABLE trackers ADD COLUMN type TEXT DEFAULT 'monetary';");
+    } catch (_) {}
+  },
 ];
 
 export function runMigrations(database) {
